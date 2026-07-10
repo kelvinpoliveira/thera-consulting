@@ -1,0 +1,13 @@
+import * as Prisma from './internal/prismaNamespaceBrowser.js';
+export { Prisma };
+export * as $Enums from './enums.js';
+export * from './enums.js';
+export type Customer = Prisma.CustomerModel;
+export type TransportType = Prisma.TransportTypeModel;
+export type CustomerTransportType = Prisma.CustomerTransportTypeModel;
+export type Item = Prisma.ItemModel;
+export type SalesOrder = Prisma.SalesOrderModel;
+export type SalesOrderItem = Prisma.SalesOrderItemModel;
+export type Schedule = Prisma.ScheduleModel;
+export type AuditLog = Prisma.AuditLogModel;
+export type User = Prisma.UserModel;

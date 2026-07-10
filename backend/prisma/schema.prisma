@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Clientes ────────────────────────────────────────────────────────────────
+
+model Customer {
+  id       String  @id @default(uuid())
+  name     String
+  document String  @unique
+  email    String?
+  phone    String?
+
+  transportTypes CustomerTransportType[]
+  salesOrders    SalesOrder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Tipos de Transporte ──────────────────────────────────────────────────────
+
+model TransportType {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+
+  customers   CustomerTransportType[]
+  salesOrders SalesOrder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Tabela pivot: quais transportes cada cliente pode usar
+model CustomerTransportType {
+  customerId      String
+  transportTypeId String
+
+  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  transportType TransportType @relation(fields: [transportTypeId], references: [id], onDelete: Cascade)
+
+  @@id([customerId, transportTypeId])
+}
+
+// ─── Itens ────────────────────────────────────────────────────────────────────
+
+model Item {
+  id          String  @id @default(uuid())
+  sku         String  @unique
+  name        String
+  description String?
+  unitPrice   Decimal @db.Decimal(10, 2)
+
+  orderItems SalesOrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Ordens de Venda ──────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  CRIADA
+  PLANEJADA
+  AGENDADA
+  EM_TRANSPORTE
+  ENTREGUE
+}
+
+model SalesOrder {
+  id              String      @id @default(uuid())
+  customerId      String
+  transportTypeId String
+  status          OrderStatus @default(CRIADA)
+
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  transportType TransportType @relation(fields: [transportTypeId], references: [id])
+  items         SalesOrderItem[]
+  schedule      Schedule?
+  auditLogs     AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SalesOrderItem {
+  salesOrderId String
+  itemId       String
+  quantity     Int
+
+  salesOrder SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  item       Item       @relation(fields: [itemId], references: [id])
+
+  @@id([salesOrderId, itemId])
+}
+
+// ─── Agendamento ─────────────────────────────────────────────────────────────
+
+model Schedule {
+  id           String   @id @default(uuid())
+  salesOrderId String   @unique
+  deliveryDate DateTime
+  windowStart  DateTime
+  windowEnd    DateTime
+  confirmed    Boolean  @default(false)
+
+  salesOrder SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Auditoria ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id            String @id @default(uuid())
+  entityType    String
+  entityId      String
+  action        String
+  previousState Json?
+  currentState  Json?
+
+  salesOrderId String?
+  salesOrder   SalesOrder? @relation(fields: [salesOrderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// ─── Autenticação ────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
